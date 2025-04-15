@@ -25,9 +25,8 @@ const vehicleServiceSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    mileage: {
-      type: Number,
-      required: true,
+    cronJobId: {
+      type: String,
     },
     cost: {
       type: Number,

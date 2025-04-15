@@ -23,11 +23,11 @@ import {
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import axios from "axios";
 
-import { vehicleServices } from "../services/api";
+import { vehicleServices, vehicles } from "../services/api";
 
 const Services = () => {
   const [services, setServices] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
+  const [vehiclesArray, setVehicles] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [formData, setFormData] = useState({
@@ -50,7 +50,7 @@ const Services = () => {
   const fetchServices = async () => {
     try {
       const response = await vehicleServices.getAll();
-      setServices(response.data);
+      setServices(response?.data?.data);
     } catch (error) {
       console.error("Error fetching services:", error);
     }
@@ -59,7 +59,7 @@ const Services = () => {
   const fetchVehicles = async () => {
     try {
       const response = await vehicles.getAll();
-      setVehicles(response.data);
+      setVehicles(response?.data?.data);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
     }
@@ -166,7 +166,6 @@ const Services = () => {
                 <TableCell>Service Type</TableCell>
                 <TableCell>Service Date</TableCell>
                 <TableCell>Next Service</TableCell>
-                <TableCell>Mileage</TableCell>
                 <TableCell>Cost</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -184,7 +183,6 @@ const Services = () => {
                   <TableCell>
                     {new Date(service.nextServiceDate).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{service.mileage}</TableCell>
                   <TableCell>${service.cost}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleOpenDialog(service)}>
@@ -214,17 +212,21 @@ const Services = () => {
               <TextField
                 select
                 fullWidth
-                label="Vehicle"
-                name="vehicle"
-                value={formData.vehicle}
+                // label="Year"
+                name="year"
+                value={formData.year}
                 onChange={handleInputChange}
                 margin="normal"
                 required
+                SelectProps={{
+                  native: true,
+                }}
               >
-                {vehicles.map((vehicle) => (
-                  <MenuItem key={vehicle._id} value={vehicle._id}>
+                <option value="">Select a vehicle</option>
+                {vehiclesArray.map((vehicle) => (
+                  <option key={vehicle._id} value={vehicle._id}>
                     {vehicle.make} {vehicle.model} - {vehicle.licensePlate}
-                  </MenuItem>
+                  </option>
                 ))}
               </TextField>
               <TextField
@@ -257,16 +259,6 @@ const Services = () => {
                 margin="normal"
                 required
                 InputLabelProps={{ shrink: true }}
-              />
-              <TextField
-                fullWidth
-                label="Mileage"
-                name="mileage"
-                type="number"
-                value={formData.mileage}
-                onChange={handleInputChange}
-                margin="normal"
-                required
               />
               <TextField
                 fullWidth

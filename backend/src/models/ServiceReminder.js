@@ -12,21 +12,10 @@ const serviceReminderSchema = new mongoose.Schema(
       ref: "Vehicle",
       required: true,
     },
-    serviceType: {
-      type: String,
+    service: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "VehicleService",
       required: true,
-      trim: true,
-    },
-    dueDate: {
-      type: Date,
-      required: true,
-    },
-    mileage: {
-      type: Number,
-    },
-    notes: {
-      type: String,
-      trim: true,
     },
     isCompleted: {
       type: Boolean,

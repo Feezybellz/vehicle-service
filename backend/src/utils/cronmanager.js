@@ -1,61 +1,35 @@
 const cron = require("node-cron");
 const ServiceReminder = require("../models/ServiceReminder");
 const User = require("../models/User");
-const appMailer = require("./mailer");
+// const appMailer = require("./mailer");
 
 class CronManager {
   constructor() {
     this.jobs = new Map();
   }
 
-  async initialize() {
-    // Schedule daily check for reminders
-    this.scheduleDailyReminderCheck();
+  //   async initialize() {}
+
+  generateCromCommandByDate(date) {
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
   }
 
-  scheduleDailyReminderCheck() {
-    // Run at 9 AM every day
-    const job = cron.schedule("0 9 * * *", async () => {
-      try {
-        await this.checkUpcomingReminders();
-      } catch (error) {
-        console.error("Error in daily reminder check:", error);
-      }
-    });
-
-    this.jobs.set("dailyReminderCheck", job);
+  createJob(date, callback) {
+    const jobId = `${date.getTime()}-${Math.random().toString(36).substr(2, 9)}`;
+    const cronCommand = this.generateCromCommandByDate(date);
+    const job = cron.schedule(cronCommand, callback);
+    this.jobs.set(jobId, job);
+    return jobId;
   }
 
-  async checkUpcomingReminders() {
-    const today = new Date();
-    const sevenDaysFromNow = new Date(today);
-    sevenDaysFromNow.setDate(today.getDate() + 7);
-
-    const upcomingReminders = await ServiceReminder.find({
-      dueDate: {
-        $gte: today,
-        $lte: sevenDaysFromNow,
-      },
-      isCompleted: false,
-    }).populate("vehicle");
-
-    for (const reminder of upcomingReminders) {
-      const user = await User.findById(reminder.vehicle.user);
-      if (!user) continue;
-
-      const daysUntilDue = Math.ceil(
-        (reminder.dueDate - today) / (1000 * 60 * 60 * 24)
-      );
-
-      // Send email notification
-      await appMailer.sendReminderEmail(
-        user.email,
-        reminder.vehicle.make,
-        reminder.vehicle.model,
-        reminder.serviceType,
-        reminder.dueDate,
-        daysUntilDue
-      );
+  deleteJob(jobId) {
+    const job = this.jobs.get(jobId);
+    if (job) {
+      job.stop();
+      this.jobs.delete(jobId);
     }
   }
 
@@ -67,4 +41,4 @@ class CronManager {
   }
 }
 
-module.exports = new CronManager();
+module.exports = CronManager;

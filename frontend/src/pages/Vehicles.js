@@ -48,7 +48,7 @@ export default function Vehicles() {
     try {
       setLoading(true);
       const response = await vehicles.getAll();
-      setVehicleList(response.data);
+      setVehicleList(response?.data?.data);
     } catch (err) {
       setError("Failed to fetch vehicles");
       console.error("Vehicles fetch error:", err);

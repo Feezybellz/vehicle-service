@@ -34,8 +34,7 @@ export default function Dashboard() {
         vehicles.getAll(),
         reminders.getAll(),
       ]);
-      setVehicleData(vehiclesResponse.data);
-      setReminderData(remindersResponse.data);
+      setVehicleData(vehiclesResponse?.data?.data);
     } catch (err) {
       setError("Failed to fetch dashboard data");
       console.error("Dashboard data fetch error:", err);

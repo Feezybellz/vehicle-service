@@ -7,9 +7,9 @@ const Vehicle = require("../models/Vehicle");
 router.get("/", auth, async (req, res) => {
   try {
     const vehicles = await Vehicle.find({ user: req.user._id });
-    res.json(vehicles);
+    res.json({ status: "success", data: vehicles });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
@@ -22,12 +22,14 @@ router.get("/:id", auth, async (req, res) => {
     });
 
     if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Vehicle not found" });
     }
 
-    res.json(vehicle);
+    res.json({ status: "success", data: vehicle });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
@@ -40,9 +42,9 @@ router.post("/", auth, async (req, res) => {
     });
 
     await vehicle.save();
-    res.status(201).json(vehicle);
+    res.status(201).json({ status: "success", data: vehicle });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ status: "error", message: error.message });
   }
 });
 
@@ -56,12 +58,14 @@ router.put("/:id", auth, async (req, res) => {
     );
 
     if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Vehicle not found" });
     }
 
-    res.json(vehicle);
+    res.json({ status: "success", data: vehicle });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ status: "error", message: error.message });
   }
 });
 
@@ -74,12 +78,14 @@ router.delete("/:id", auth, async (req, res) => {
     });
 
     if (!vehicle) {
-      return res.status(404).json({ message: "Vehicle not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Vehicle not found" });
     }
 
-    res.json({ message: "Vehicle deleted successfully" });
+    res.json({ status: "success", message: "Vehicle deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ status: "error", message: error.message });
   }
 });
 
