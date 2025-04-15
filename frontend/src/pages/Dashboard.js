@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Grid,
   Paper,
@@ -19,21 +19,23 @@ import { format } from "date-fns";
 
 export default function Dashboard() {
   const [vehicleData, setVehicleData] = useState([]);
-  const [reminderData, setReminderData] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const effectRan = useRef(false);
+
   useEffect(() => {
-    fetchData();
+    if (effectRan.current === false) {
+      fetchData();
+      effectRan.current = true;
+    }
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [vehiclesResponse, remindersResponse] = await Promise.all([
-        vehicles.getAll(),
-        reminders.getAll(),
-      ]);
+      const [vehiclesResponse] = await Promise.all([vehicles.getAll()]);
       setVehicleData(vehiclesResponse?.data?.data);
     } catch (err) {
       setError("Failed to fetch dashboard data");
@@ -101,51 +103,6 @@ export default function Dashboard() {
               </Grid>
             ))}
           </Grid>
-        </Paper>
-      </Grid>
-
-      {/* Upcoming Service Reminders */}
-      <Grid item xs={12} md={6}>
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Upcoming Service Reminders
-          </Typography>
-          <List>
-            {reminderData
-              .filter((reminder) => !reminder.completed)
-              .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-              .slice(0, 5)
-              .map((reminder) => (
-                <React.Fragment key={reminder._id}>
-                  <ListItem>
-                    <ListItemText
-                      primary={reminder.title}
-                      secondary={
-                        <>
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="textPrimary"
-                          >
-                            Due:{" "}
-                            {format(new Date(reminder.dueDate), "MMM dd, yyyy")}
-                          </Typography>
-                          <br />
-                          {reminder.description}
-                        </>
-                      }
-                    />
-                  </ListItem>
-                  <Divider />
-                </React.Fragment>
-              ))}
-          </List>
-          {reminderData.filter((reminder) => !reminder.completed).length ===
-            0 && (
-            <Typography color="textSecondary" sx={{ p: 2 }}>
-              No upcoming service reminders
-            </Typography>
-          )}
         </Paper>
       </Grid>
     </Grid>

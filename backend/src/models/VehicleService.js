@@ -40,11 +40,6 @@ const vehicleServiceSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    documents: [
-      {
-        type: String, // URLs to stored documents
-      },
-    ],
   },
   {
     timestamps: true,

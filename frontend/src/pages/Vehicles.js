@@ -1,5 +1,5 @@
 import generateYearOptions from "../utils/generateYears";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 import {
   Box,
@@ -40,8 +40,13 @@ export default function Vehicles() {
     licensePlate: "",
   });
 
+  const effectRan = useRef(false);
+
   useEffect(() => {
-    fetchVehicles();
+    if (effectRan.current === false) {
+      fetchVehicles();
+      effectRan.current = true;
+    }
   }, []);
 
   const fetchVehicles = async () => {

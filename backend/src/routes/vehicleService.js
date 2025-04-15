@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const VehicleService = require("../models/vehicleService");
+const VehicleService = require("../models/VehicleService");
 const auth = require("../middleware/auth");
 const CronManager = require("../utils/cronManager");
+
+const cronManager = new CronManager();
+cronManager.initialize();
 
 // Get all vehicle services
 router.get("/", auth, async (req, res) => {
@@ -28,6 +31,7 @@ router.get("/", auth, async (req, res) => {
                 make: doc.make,
                 model: doc.model,
                 id: doc._id,
+                licensePlate: doc.licensePlate,
               }
             : null,
       })
@@ -35,20 +39,84 @@ router.get("/", auth, async (req, res) => {
 
     res.json({ status: "success", data: services });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ status: "error", message: err.message });
   }
 });
 
 // Get one vehicle service
 router.get("/:id", auth, async (req, res) => {
   try {
-    const service = await VehicleService.findById(req.params.id);
+    const service = await VehicleService.findById(req.params.id)
+      .populate({
+        path: "user",
+        select: "firstName lastName email",
+        transform: (doc) =>
+          doc
+            ? {
+                firstName: doc.firstName,
+                lastName: doc.lastName,
+              }
+            : null,
+      })
+      .populate({
+        path: "vehicle",
+        select: "make model licensePlate _id",
+        transform: (doc) =>
+          doc
+            ? {
+                make: doc.make,
+                model: doc.model,
+                id: doc._id,
+                licensePlate: doc.licensePlate,
+              }
+            : null,
+      })
+      .lean(); // Convert to plain JavaScript objects
+
     if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Service not found" });
     }
-    res.json(service);
+    res.json({ status: "success", data: service });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+// get all vehicle services by vehicle id
+router.get("/vehicle/:id", auth, async (req, res) => {
+  try {
+    const services = await VehicleService.find({ vehicle: req.params.id })
+      .populate({
+        path: "user",
+        select: "firstName lastName email",
+        transform: (doc) =>
+          doc
+            ? {
+                firstName: doc.firstName,
+                lastName: doc.lastName,
+              }
+            : null,
+      })
+      .populate({
+        path: "vehicle",
+        select: "make model licensePlate _id",
+        transform: (doc) =>
+          doc
+            ? {
+                make: doc.make,
+                model: doc.model,
+                id: doc._id,
+                licensePlate: doc.licensePlate,
+              }
+            : null,
+      })
+      .lean(); // Convert to plain JavaScript objects
+
+    res.json({ status: "success", data: services });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
   }
 });
 
@@ -71,17 +139,32 @@ router.post("/", auth, async (req, res) => {
 
   try {
     const newService = await service.save();
-    const cronManager = new CronManager();
 
-    const cronJobId = cronManager.createJob(newService.nextServiceDate, () => {
+    const name = `Service Reminder for ${newService.vehicle.make} ${newService.vehicle.model}`;
+    const description = `This job sends a notification ${newService.vehicle.make} ${newService.vehicle.model} service is due`;
+    const cronExpression = cronManager.getCronExpressionFromDate(
+      newService.nextServiceDate
+    );
+    const taskFn = () => {
       console.log("Service reminder sent");
-    });
-    newService.cronJobId = cronJobId;
+    };
+    const { jobId, doc } = await cronManager.createAndSaveJob(
+      name,
+      description,
+      cronExpression,
+      taskFn,
+      { timezone: "UTC", metadata: { vehicleId: newService.vehicle._id } }
+    );
+
+    newService.cronJobId = jobId;
     await newService.save();
 
-    res.status(201).json(newService);
+    res.status(201).json({
+      status: "success",
+      message: "Service created successfully",
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({ status: "error", message: err.message });
   }
 });
 
@@ -90,7 +173,9 @@ router.patch("/:id", auth, async (req, res) => {
   try {
     const service = await VehicleService.findById(req.params.id);
     if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Service not found" });
     }
 
     if (req.body.vehicleId) service.vehicleId = req.body.vehicleId;
@@ -100,22 +185,36 @@ router.patch("/:id", auth, async (req, res) => {
       service.nextServiceDate = req.body.nextServiceDate;
     if (req.body.cost) service.cost = req.body.cost;
     if (req.body.notes) service.notes = req.body.notes;
+    if (req.body.serviceProvider)
+      service.serviceProvider = req.body.serviceProvider;
 
     const updatedService = await service.save();
-    const cronManager = new CronManager();
-    cronManager.deleteJob(updatedService.cronJobId);
-    const cronJobId = cronManager.createJob(
-      updatedService.nextServiceDate,
-      () => {
-        console.log("Service reminder sent");
-      }
-    );
-    updatedService.cronJobId = cronJobId;
-    await updatedService.save();
 
-    res.json(updatedService);
+    // const cronExpression = cronManager.getCronExpressionFromDate(
+    //   updatedService.nextServiceDate
+    // );
+
+    const cronExpression = "* * * * *";
+    const taskFn = () => {
+      console.log("Service reminder updated");
+    };
+
+    console.log(cronManager.jobs);
+    cronManager.updateJob(updatedService.cronJobId, cronExpression, {
+      task: taskFn,
+    });
+
+    res.json({
+      status: "success",
+      // data: updatedService,
+      message: "Service updated successfully",
+    });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(400).json({
+      status: "error",
+      message: err.message,
+      err_file: err.stack,
+    });
   }
 });
 
@@ -124,12 +223,15 @@ router.delete("/:id", auth, async (req, res) => {
   try {
     const service = await VehicleService.findById(req.params.id);
     if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Service not found" });
     }
-    await service.remove();
-    res.json({ message: "Service deleted" });
+    cronManager.deleteJob(service.cronJobId);
+    await service.deleteOne();
+    res.json({ status: "success", message: "Service deleted" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ status: "error", message: err.message });
   }
 });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -18,10 +18,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
+  // MenuItem,
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
-import axios from "axios";
 
 import { vehicleServices, vehicles } from "../services/api";
 
@@ -40,11 +39,16 @@ const Services = () => {
     notes: "",
     serviceProvider: "",
   });
+  const [loadingVehicles, setLoadingVehicles] = useState(false);
   const navigate = useNavigate();
 
+  const effectRan = useRef(false);
+
   useEffect(() => {
-    fetchServices();
-    fetchVehicles();
+    if (effectRan.current === false) {
+      fetchServices();
+      effectRan.current = true;
+    }
   }, []);
 
   const fetchServices = async () => {
@@ -58,14 +62,18 @@ const Services = () => {
 
   const fetchVehicles = async () => {
     try {
+      setLoadingVehicles(true);
       const response = await vehicles.getAll();
       setVehicles(response?.data?.data);
     } catch (error) {
       console.error("Error fetching vehicles:", error);
+    } finally {
+      setLoadingVehicles(false);
     }
   };
 
-  const handleOpenDialog = (service = null) => {
+  const handleOpenDialog = async (service = null) => {
+    await fetchVehicles();
     if (service) {
       setSelectedService(service);
       setFormData({
@@ -174,7 +182,8 @@ const Services = () => {
               {services.map((service) => (
                 <TableRow key={service._id}>
                   <TableCell>
-                    {service.vehicle.make} {service.vehicle.model}
+                    {service.vehicle.make} {service.vehicle.model} -{" "}
+                    {service.vehicle.licensePlate}
                   </TableCell>
                   <TableCell>{service.serviceType}</TableCell>
                   <TableCell>
@@ -212,22 +221,31 @@ const Services = () => {
               <TextField
                 select
                 fullWidth
-                // label="Year"
-                name="year"
-                value={formData.year}
+                // label="Vehicle"
+                name="vehicleId"
+                value={formData.vehicle}
                 onChange={handleInputChange}
                 margin="normal"
                 required
+                disabled={loadingVehicles}
                 SelectProps={{
                   native: true,
                 }}
               >
-                <option value="">Select a vehicle</option>
-                {vehiclesArray.map((vehicle) => (
-                  <option key={vehicle._id} value={vehicle._id}>
-                    {vehicle.make} {vehicle.model} - {vehicle.licensePlate}
+                <option value="" disabled>
+                  Select a vehicle
+                </option>
+                {loadingVehicles ? (
+                  <option value="" disabled>
+                    Loading vehicles...
                   </option>
-                ))}
+                ) : (
+                  vehiclesArray.map((vehicle) => (
+                    <option key={vehicle._id} value={vehicle._id}>
+                      {vehicle.make} {vehicle.model} - {vehicle.licensePlate}
+                    </option>
+                  ))
+                )}
               </TextField>
               <TextField
                 fullWidth

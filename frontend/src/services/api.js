@@ -107,7 +107,7 @@ export const vehicleServices = {
   create: (vehicleServiceData) =>
     api.post("/vehicle-services/", vehicleServiceData),
   update: (id, vehicleServiceData) =>
-    api.put(`/vehicle-services/${id}`, vehicleServiceData),
+    api.patch(`/vehicle-services/${id}`, vehicleServiceData),
   delete: (id) => api.delete(`/vehicle-services/${id}`),
 };
 
