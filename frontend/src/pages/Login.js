@@ -28,6 +28,8 @@ export default function Login() {
       await login(email, password);
       navigate("/");
     } catch (err) {
+      setLoading(false);
+      console.log(err);
       setError(err.response?.data?.message || "Failed to login");
     } finally {
       setLoading(false);

@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
+  Build as BuildIcon,
   Dashboard as DashboardIcon,
   DirectionsCar as CarIcon,
   Notifications as NotificationsIcon,
@@ -42,7 +43,8 @@ export default function Layout() {
   const menuItems = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Vehicles", icon: <CarIcon />, path: "/vehicles" },
-    { text: "Reminders", icon: <NotificationsIcon />, path: "/reminders" },
+    // { text: "Reminders", icon: <NotificationsIcon />, path: "/reminders" },
+    { text: "Services", icon: <BuildIcon />, path: "/services" },
   ];
 
   const drawer = (

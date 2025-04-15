@@ -31,6 +31,7 @@ mongoose
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/vehicles", require("./routes/vehicles"));
 app.use("/api/service-reminders", require("./routes/serviceReminders"));
+app.use("/api/vehicle-services", require("./routes/vehicleService"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

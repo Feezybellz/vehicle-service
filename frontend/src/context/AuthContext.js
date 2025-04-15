@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await auth.login(email, password);
+
       const { user, refreshToken, accessToken } = response.data;
 
       localStorage.setItem("refreshToken", refreshToken);
@@ -44,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       setRefreshToken(refreshToken);
       setUser(user);
     } catch (error) {
+      console.log(error);
       throw error;
     }
   };

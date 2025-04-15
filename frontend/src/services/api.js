@@ -4,7 +4,7 @@ import axios from "axios";
 // dotenv.config({ path: "../../.env" });
 
 // const API_URL = "http://localhost:5000/api";
-const API_URL = process.env.API_URL;
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 console.log("API_URL", API_URL);
 
 const api = axios.create({
@@ -38,6 +38,7 @@ export const auth = {
   login: (email, password) => api.post("/auth/login", { email, password }),
   signup: (userData) => api.post("/auth/signup", userData),
   logout: () => api.post("/auth/logout"),
+  verifyEmail: (token) => api.get(`/auth/verify-email?token=${token}`),
 };
 
 // Add response interceptor to handle token refresh
@@ -47,16 +48,22 @@ const noRefreshEndpoints = [
   "/auth/signup",
   "/auth/refresh",
   "/auth/logout",
+  "/auth/verify-email",
 ];
 
 // Helper to check if endpoint needs refresh
 const needsTokenRefresh = (url) => {
-  return !noRefreshEndpoints.some((endpoint) => url.endsWith(endpoint));
+  return !noRefreshEndpoints.some((endpoint) => url.includes(endpoint));
 };
 
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.log(
+      "refreshing token",
+      error.config.url,
+      needsTokenRefresh(error.config.url)
+    );
     if (needsTokenRefresh(error.config.url)) {
       try {
         await refreshToken();
@@ -65,9 +72,25 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
+    return Promise.reject(error);
   }
 );
 
+// api.interceptors.response.use(
+//   (response) => {
+//     console.log(response);
+//     return Promise.resolve(response);
+//   }, // Success case (2xx)
+//   (error) => {
+//     console.log(error);
+
+//     if (error.response) {
+//       // Return the error response instead of rejecting
+//       return Promise.resolve(error.response);
+//     }
+//     return Promise.reject(error);
+//   }
+// );
 export const vehicles = {
   // refereshToken before making request
 
@@ -76,6 +99,16 @@ export const vehicles = {
   create: (vehicleData) => api.post("/vehicles", vehicleData),
   update: (id, vehicleData) => api.put(`/vehicles/${id}`, vehicleData),
   delete: (id) => api.delete(`/vehicles/${id}`),
+};
+
+export const vehicleServices = {
+  getAll: () => api.get("/vehicle-services"),
+  getOne: (id) => api.get(`/vehicle-services/${id}`),
+  create: (vehicleServiceData) =>
+    api.post("/vehicle-services/", vehicleServiceData),
+  update: (id, vehicleServiceData) =>
+    api.put(`/vehicle-services/${id}`, vehicleServiceData),
+  delete: (id) => api.delete(`/vehicle-services/${id}`),
 };
 
 export const reminders = {

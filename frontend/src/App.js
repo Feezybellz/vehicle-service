@@ -12,9 +12,11 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 // Import pages (we'll create these next)
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
 import Dashboard from "./pages/Dashboard";
 import Vehicles from "./pages/Vehicles";
 import Reminders from "./pages/Reminders";
+import Services from "./pages/Services";
 import Layout from "./components/Layout";
 
 const theme = createTheme({
@@ -53,6 +55,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Protected routes */}
             <Route
@@ -66,6 +69,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="vehicles" element={<Vehicles />} />
               <Route path="reminders" element={<Reminders />} />
+              <Route path="services" element={<Services />} />
             </Route>
           </Routes>
         </Router>
