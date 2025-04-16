@@ -20,11 +20,6 @@ export default defineConfig({
   ],
 
   env: {
-    // Load environment variables from .env file
-    // This will make them available in your application
-    // through import.meta.env
-    // Example: import.meta.env.VITE_API_URL
-
     VITE_API_URL: process.env.VITE_API_URL || "http://localhost:5000/api",
   },
 
