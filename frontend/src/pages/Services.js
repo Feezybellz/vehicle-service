@@ -39,7 +39,7 @@ const Services = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [formData, setFormData] = useState({
-    vehicle: "",
+    vehicleId: "",
     serviceType: "",
     serviceDate: "",
     nextServiceDate: "",
@@ -86,7 +86,7 @@ const Services = () => {
     if (service) {
       setSelectedService(service);
       setFormData({
-        vehicle: service.vehicle._id,
+        vehicleId: service.vehicle.id,
         serviceType: service.serviceType,
         serviceDate: new Date(service.serviceDate).toISOString().split("T")[0],
         nextServiceDate: service.nextServiceDate,
@@ -97,7 +97,7 @@ const Services = () => {
     } else {
       setSelectedService(null);
       setFormData({
-        vehicle: "",
+        vehicleId: "",
         serviceType: "",
         serviceDate: "",
         nextServiceDate: "",
@@ -120,6 +120,10 @@ const Services = () => {
 
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
+
+      if (name === "vehicleId") {
+        updated.vehicleId = value;
+      }
 
       if (
         name === "nextServiceDate" &&
@@ -237,9 +241,8 @@ const Services = () => {
               <TextField
                 select
                 fullWidth
-                // label="Vehicle"
                 name="vehicleId"
-                value={formData.vehicle}
+                value={formData.vehicleId || ""}
                 onChange={handleInputChange}
                 margin="normal"
                 required
@@ -247,17 +250,18 @@ const Services = () => {
                 SelectProps={{
                   native: true,
                 }}
+                InputLabelProps={{ shrink: true }}
               >
-                <option value="" disabled>
-                  Select a vehicle
-                </option>
+                <option value="">Select a vehicle</option>
                 {loadingVehicles ? (
-                  <option value="" disabled>
-                    Loading vehicles...
-                  </option>
+                  <option value="">Loading vehicles...</option>
                 ) : (
                   vehiclesArray.map((vehicle) => (
-                    <option key={vehicle._id} value={vehicle._id}>
+                    <option
+                      key={vehicle._id}
+                      value={vehicle._id}
+                      selected={vehicle._id === formData.vehicle} // This is redundant when using value prop
+                    >
                       {vehicle.make} {vehicle.model} - {vehicle.licensePlate}
                     </option>
                   ))

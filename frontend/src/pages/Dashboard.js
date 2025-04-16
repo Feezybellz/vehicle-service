@@ -111,11 +111,11 @@ export default function Dashboard() {
                       License Plate: {vehicle.licensePlate}
                     </Typography>
                   </CardContent>
-                  <CardActions>
+                  {/* <CardActions>
                     <Button size="small" color="primary">
                       View Details
                     </Button>
-                  </CardActions>
+                  </CardActions> */}
                 </Card>
               </Grid>
             ))}

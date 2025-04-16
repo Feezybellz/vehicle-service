@@ -25,12 +25,17 @@ api.interceptors.request.use((config) => {
 
 export const refreshToken = async () => {
   const refreshToken = localStorage.getItem("refreshToken");
+  console.log("refreshToken", refreshToken);
   if (refreshToken) {
-    api.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
-    const response = await api.post("/auth/refresh");
-    const { token, refreshToken } = response.data;
-    localStorage.setItem("token", token);
-    localStorage.setItem("refreshToken", refreshToken);
+    try {
+      api.defaults.headers.common["Authorization"] = `Bearer ${refreshToken}`;
+      const response = await api.post("/auth/refresh");
+      const { token, refreshToken } = response.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("refreshToken", refreshToken);
+    } catch (error) {
+      window.location.href = "/login";
+    }
   }
 };
 
@@ -59,11 +64,6 @@ const needsTokenRefresh = (url) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log(
-      "refreshing token",
-      error.config.url,
-      needsTokenRefresh(error.config.url)
-    );
     if (needsTokenRefresh(error.config.url)) {
       try {
         await refreshToken();

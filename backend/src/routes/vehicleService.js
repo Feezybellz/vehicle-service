@@ -235,7 +235,8 @@ router.patch("/:id", auth, async (req, res) => {
         .json({ status: "error", message: "Service not found" });
     }
 
-    if (req.body.vehicleId) service.vehicleId = req.body.vehicleId;
+    if (req.body.vehicleId) service.vehicle = req.body.vehicleId;
+
     if (req.body.serviceType) service.serviceType = req.body.serviceType;
     if (req.body.serviceDate) service.serviceDate = req.body.serviceDate;
     if (req.body.nextServiceDate)
