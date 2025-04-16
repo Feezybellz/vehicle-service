@@ -1,11 +1,17 @@
 const nodemailer = require("nodemailer");
 
+console.log(process.env.MAIL_HOST);
+console.log(process.env.MAIL_PORT);
+console.log(process.env.MAIL_USER);
+console.log(process.env.MAIL_PASSWORD);
+console.log(process.env.MAIL_FROM);
+
 class AppMailer {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
-      secure: process.env.MAIL_PORT === 587,
+      secure: parseInt(process.env.MAIL_PORT) == 465,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASSWORD,
