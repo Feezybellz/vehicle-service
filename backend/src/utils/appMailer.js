@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+const mailTemplate = require("../mailTemplate/main");
 class AppMailer {
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -39,10 +39,10 @@ class AppMailer {
 
   async sendVerificationEmail(email, verificationUrl) {
     const subject = "Verify your email";
-    const html = `
-      <h2>Verify your email</h2>
-      <p>Please click <a href="${verificationUrl}">here</a> to verify your email.</p>
-    `;
+    const html = mailTemplate(
+      subject,
+      `Please click <a href="${verificationUrl}">here</a> to verify your email.`
+    );
 
     return this.sendMail({
       to: email,

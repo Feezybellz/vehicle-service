@@ -1,6 +1,7 @@
 const UserCron = require("../models/UserCron");
 const nodeCron = require("node-cron");
 const appMailer = require("./appMailer");
+const mailTemplate = require("../mailTemplate/main");
 
 class UserCronManager {
   constructor() {
@@ -58,7 +59,10 @@ class UserCronManager {
 
           //   console.log(subject);
 
-          const message = `Hello ${userCron.user.firstName} ${userCron.user.lastName}, This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} - [${userCron.vehicle.licensePlate}] is due for ${userCron?.vehicleService?.serviceType ?? "a"} service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`;
+          const message = mailTemplate(
+            subject,
+            `Hello ${userCron.user.firstName} ${userCron.user.lastName}, This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} - [${userCron.vehicle.licensePlate}] is due for ${userCron?.vehicleService?.serviceType ?? "a"} service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`
+          );
 
           //   console.log(message);
 
