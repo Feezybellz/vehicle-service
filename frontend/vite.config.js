@@ -40,6 +40,10 @@ export default defineConfig({
   },
   server: {
     port: process.env.VITE_PORT || 3000,
-    host: true,
+    allowedHosts: [
+      "localhost",
+      "127.0.0.1",
+      "frontend.vehicle.thothmatrix.com.ng",
+    ],
   },
 });
