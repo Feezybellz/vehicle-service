@@ -235,6 +235,19 @@ router.patch("/:id", auth, async (req, res) => {
         .json({ status: "error", message: "Service not found" });
     }
 
+    const errors = [];
+    if (req.body.vehicleId.length < 1) {
+      errors.push("Vehicle is required");
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        status: "error",
+        errors: errors,
+        message: "Some error occured",
+      });
+    }
+
     if (req.body.vehicleId) service.vehicle = req.body.vehicleId;
 
     if (req.body.serviceType) service.serviceType = req.body.serviceType;

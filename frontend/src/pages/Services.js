@@ -22,6 +22,8 @@ import {
 } from "@mui/material";
 import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
+import { toast } from "react-toastify";
+
 import { vehicleServices, vehicles } from "../services/api";
 
 function toLocalDate(utcDateString) {
@@ -141,9 +143,38 @@ const Services = () => {
     e.preventDefault();
     try {
       if (selectedService) {
-        await vehicleServices.update(selectedService._id, formData);
+        const response = await vehicleServices.update(
+          selectedService._id,
+          formData
+        );
+        if (response.status === "success") {
+          toast.success("Service updated successfully");
+          fetchServices();
+          handleCloseDialog();
+        } else {
+          if (response.errors) {
+            response.errors.forEach((error) => {
+              toast.error(error);
+            });
+          } else {
+            toast.error(response.message);
+          }
+        }
       } else {
-        await vehicleServices.create(formData);
+        const response = await vehicleServices.create(formData);
+        if (response.status === "success") {
+          toast.success("Service created successfully");
+          fetchServices();
+          handleCloseDialog();
+        } else {
+          if (response.errors) {
+            response.errors.forEach((error) => {
+              toast.error(error);
+            });
+          } else {
+            toast.error(response.message);
+          }
+        }
       }
       fetchServices();
       handleCloseDialog();

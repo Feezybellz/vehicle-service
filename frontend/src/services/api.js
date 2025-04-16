@@ -65,11 +65,13 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (needsTokenRefresh(error.config.url)) {
-      try {
-        await refreshToken();
-        return api(error.config);
-      } catch (refreshError) {
-        return Promise.reject(refreshError);
+      if (error.response.status === 401) {
+        try {
+          await refreshToken();
+          return api(error.config);
+        } catch (refreshError) {
+          return Promise.reject(refreshError);
+        }
       }
     }
     return Promise.reject(error);
