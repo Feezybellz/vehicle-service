@@ -109,6 +109,7 @@ export const vehicleServices = {
   update: (id, vehicleServiceData) =>
     api.patch(`/vehicle-services/${id}`, vehicleServiceData),
   delete: (id) => api.delete(`/vehicle-services/${id}`),
+  upcomingServices: () => api.get("/vehicle-services/upcoming"),
 };
 
 export const reminders = {

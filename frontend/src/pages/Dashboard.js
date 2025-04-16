@@ -14,11 +14,24 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
-import { vehicles, reminders } from "../services/api";
-import { format } from "date-fns";
+import { vehicles, vehicleServices } from "../services/api";
+
+function cleanDate(utcDateString) {
+  const date = new Date(utcDateString);
+
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function Dashboard() {
   const [vehicleData, setVehicleData] = useState([]);
+  const [upcomingServices, setUpcomingServices] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,8 +48,12 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [vehiclesResponse] = await Promise.all([vehicles.getAll()]);
+      const [vehiclesResponse, upcomingServicesResponse] = await Promise.all([
+        vehicles.getAll(),
+        vehicleServices.upcomingServices(),
+      ]);
       setVehicleData(vehiclesResponse?.data?.data);
+      setUpcomingServices(upcomingServicesResponse?.data?.data);
     } catch (err) {
       setError("Failed to fetch dashboard data");
       console.error("Dashboard data fetch error:", err);
@@ -103,6 +120,23 @@ export default function Dashboard() {
               </Grid>
             ))}
           </Grid>
+        </Paper>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Upcoming Services
+          </Typography>
+          <List>
+            {upcomingServices.map((service) => (
+              <ListItem key={service._id}>
+                <ListItemText
+                  primary={`${service.vehicle.make} ${service.vehicle.model} - ${service.serviceType}`}
+                  secondary={`${cleanDate(service.nextServiceDate)}`}
+                />
+              </ListItem>
+            ))}
+          </List>
         </Paper>
       </Grid>
     </Grid>

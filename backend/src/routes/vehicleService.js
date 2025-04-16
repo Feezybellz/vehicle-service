@@ -43,6 +43,64 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+router.get("/upcoming", auth, async (req, res) => {
+  try {
+    const currentDate = new Date();
+
+    const services = await VehicleService.find({
+      user: req.user._id,
+      nextServiceDate: {
+        $gte: currentDate,
+        $lte: new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000), // Next 30 days
+      },
+    })
+      .populate("user", "firstName lastName email")
+      .populate("vehicle", "make model licensePlate")
+      .lean()
+      .exec();
+
+    // Transform the data for cleaner response
+    const transformedServices = services.map((service) => ({
+      ...service,
+      vehicle: service.vehicle
+        ? {
+            make: service.vehicle.make,
+            model: service.vehicle.model,
+            id: service.vehicle._id,
+            licensePlate: service.vehicle.licensePlate,
+          }
+        : null,
+      user: service.user
+        ? {
+            firstName: service.user.firstName,
+            lastName: service.user.lastName,
+            email: service.user.email,
+            id: service.user._id,
+          }
+        : null,
+    }));
+
+    res.json({
+      status: "success",
+      data: transformedServices,
+      meta: {
+        count: transformedServices.length,
+        dateRange: {
+          from: currentDate,
+          to: new Date(currentDate.getTime() + 30 * 24 * 60 * 60 * 1000),
+        },
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching upcoming services:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch upcoming services",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
+  }
+});
+
 // Get one vehicle service
 router.get("/:id", auth, async (req, res) => {
   try {

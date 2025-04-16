@@ -58,7 +58,7 @@ class UserCronManager {
 
           //   console.log(subject);
 
-          const message = `Hello , This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} is due for a service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`;
+          const message = `Hello ${userCron.user.firstName} ${userCron.user.lastName}, This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} - [${userCron.vehicle.licensePlate}] is due for ${userCron?.vehicleService?.serviceType ?? "a"} service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`;
 
           //   console.log(message);
 
