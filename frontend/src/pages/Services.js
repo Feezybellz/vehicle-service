@@ -271,7 +271,7 @@ const Services = () => {
                 fullWidth
                 label="Next Service Date"
                 name="nextServiceDate"
-                type="datetime-local"
+                type="date"
                 value={formData.nextServiceDate}
                 onChange={handleInputChange}
                 margin="normal"
