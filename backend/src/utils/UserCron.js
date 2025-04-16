@@ -35,37 +35,66 @@ class UserCronManager {
   async getAll() {
     const userCrons = await UserCron.find()
       .populate("user")
-      .populate("vehicle");
+      .populate("vehicle")
+      .populate("vehicleService");
     return userCrons;
   }
 
-  async initialize() {
-    const userCrons = await this.getAll();
-    // console.log(userCrons);
+  async getActiveCrons() {
+    const userCrons = await UserCron.find({ active: true })
+      .populate("user")
+      .populate("vehicle")
+      .populate("vehicleService");
+    return userCrons;
+  }
+
+  async load() {
+    const userCrons = await this.getActiveCrons();
     userCrons.forEach((userCron) => {
-      const cronJob = nodeCron.schedule(userCron.cronExpression, async () => {
-        console.log("Sending email to", userCron.user.email);
-        await appMailer.sendMail({
-          to: userCron.user.email,
-          subject: `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`,
-          html: `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`,
+      try {
+        const cronJob = nodeCron.schedule(userCron.cronExpression, async () => {
+          console.log("Sending email");
+
+          const subject = `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`;
+
+          console.log(subject);
+
+          const message = `Hello , This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} is due for a service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`;
+
+          console.log(message);
+
+          const result = await appMailer.sendMail({
+            to: userCron.user.email,
+            subject: subject,
+            html: message,
+          });
+
+          console.log(result);
+
+          //   userCron.status = "sent";
+          //   userCron.active = false;
+          //   await userCron.save();
+
+          console.log("Email sent");
+
+          cronJob.stop();
         });
-      });
+      } catch (error) {
+        console.log(error);
+      }
     });
   }
 
-  async reload() {
-    const userCrons = await this.getAll();
-    userCrons.forEach((userCron) => {
-      const cronJob = nodeCron.schedule(userCron.cronExpression, async () => {
-        console.log("Sending email to", userCron.user.email);
-        await appMailer.sendMail({
-          to: userCron.user.email,
-          subject: `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`,
-          html: `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`,
-        });
-      });
-    });
+  getCronExpressionFromDate(date) {
+    if (!(date instanceof Date)) {
+      throw new Error("Input must be a valid Date object");
+    }
+
+    const minutes = date.getMinutes();
+    const hours = date.getHours();
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    return `${minutes} ${hours} ${day} ${month} *`;
   }
 }
 

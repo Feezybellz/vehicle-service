@@ -2,13 +2,10 @@ const express = require("express");
 const router = express.Router();
 const VehicleService = require("../models/VehicleService");
 const auth = require("../middleware/auth");
-const CronManager = require("../utils/cronManager");
 const UserCronManager = require("../utils/UserCron");
-const cronManager = new CronManager();
-cronManager.initialize();
 
 const userCronManager = new UserCronManager();
-userCronManager.initialize();
+userCronManager.load();
 
 // Get all vehicle services
 router.get("/", auth, async (req, res) => {
@@ -149,14 +146,15 @@ router.post("/", auth, async (req, res) => {
     const userCron = await userCronManager.create({
       user: req.user._id,
       vehicle: req.body.vehicleId,
-      cronExpression: cronManager.getCronExpressionFromDate(
+      vehicleService: newService._id,
+      cronExpression: userCronManager.getCronExpressionFromDate(
         newService.nextServiceDate
       ),
     });
 
     newService.cronJobId = userCron._id;
 
-    userCronManager.reload();
+    userCronManager.load();
 
     await newService.save();
 
@@ -223,17 +221,13 @@ router.patch("/:id", auth, async (req, res) => {
       },
     ]);
 
-    // const cronExpression = cronManager.getCronExpressionFromDate(
-    //   updatedService.nextServiceDate
-    // );
-
     const cronExpression = "*/1 * * * *";
 
     const userCron = await userCronManager.update(updatedService.cronJobId, {
       cronExpression,
     });
 
-    userCronManager.reload();
+    userCronManager.load();
     res.json({
       status: "success",
       // data: updatedService,
@@ -260,7 +254,7 @@ router.delete("/:id", auth, async (req, res) => {
 
     await userCronManager.delete(service.cronJobId);
 
-    userCronManager.reload();
+    userCronManager.load();
 
     await service.deleteOne();
     res.json({ status: "success", message: "Service deleted" });

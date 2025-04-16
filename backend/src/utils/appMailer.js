@@ -1,11 +1,5 @@
 const nodemailer = require("nodemailer");
 
-console.log(process.env.MAIL_HOST);
-console.log(process.env.MAIL_PORT);
-console.log(process.env.MAIL_USER);
-console.log(process.env.MAIL_PASSWORD);
-console.log(process.env.MAIL_FROM);
-
 class AppMailer {
   constructor() {
     this.transporter = nodemailer.createTransport({
@@ -30,6 +24,7 @@ class AppMailer {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
+      console.log("Email sent:", info.messageId);
       return {
         success: true,
         messageId: info.messageId,

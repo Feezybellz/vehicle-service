@@ -11,6 +11,11 @@ const userCronSchema = new mongoose.Schema({
     ref: "Vehicle",
     required: true,
   },
+  vehicleService: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "VehicleService",
+    required: true,
+  },
   cronExpression: {
     type: String,
     required: true,
@@ -18,6 +23,10 @@ const userCronSchema = new mongoose.Schema({
   active: {
     type: Boolean,
     default: true,
+  },
+  status: {
+    type: String,
+    default: "pending",
   },
   createdAt: {
     type: Date,
