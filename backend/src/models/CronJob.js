@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const cronParser = require("cron-parser");
 
 const cronJobSchema = new mongoose.Schema(
   {
@@ -98,10 +97,30 @@ const cronJobSchema = new mongoose.Schema(
 // };
 
 // Method to execute the task
-cronJobSchema.methods.execute = async function () {
+cronJobSchema.methods.execute = async function (context = {}) {
   try {
-    const taskFn = new Function("return " + this.task)();
-    await taskFn();
+    // Add default dependencies to context
+    const fullContext = {
+      require, // Make require available
+      console, // Make console available
+      ...context, // User-provided context
+    };
+
+    // Create the function with access to our context
+    const taskFn = new Function(
+      "context",
+      `with(context) { 
+          return (${this.task})(context); 
+        }`
+    );
+
+    await taskFn(fullContext);
+
+    // this.lastExecution = new Date();
+    // this.nextExecution = this.constructor.getNextExecution(
+    //   this.cronExpression,
+    //   this.timezone
+    // );
     await this.save();
     return { success: true };
   } catch (err) {

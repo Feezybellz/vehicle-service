@@ -3,12 +3,10 @@ const router = express.Router();
 const VehicleService = require("../models/VehicleService");
 const auth = require("../middleware/auth");
 const CronManager = require("../utils/cronManager");
-const UserCronManager = require("../utils/UserCron");
+const appMailer = require("../utils/appMailer");
+
 const cronManager = new CronManager();
 cronManager.initialize();
-
-const userCronManager = new UserCronManager();
-userCronManager.initialize();
 
 // Get all vehicle services
 router.get("/", auth, async (req, res) => {
@@ -142,22 +140,24 @@ router.post("/", auth, async (req, res) => {
 
   try {
     const newService = await service.save();
-    const serviceData = await VehicleService.findById(newService._id).populate(
-      "vehicle"
+
+    const name = `Service Reminder for ${newService.vehicle.make} ${newService.vehicle.model}`;
+    const description = `This job sends a notification ${newService.vehicle.make} ${newService.vehicle.model} service is due`;
+    const cronExpression = cronManager.getCronExpressionFromDate(
+      newService.nextServiceDate
+    );
+    const taskFn = () => {
+      console.log("Service reminder sent");
+    };
+    const { jobId, doc } = await cronManager.createAndSaveJob(
+      name,
+      description,
+      cronExpression,
+      taskFn,
+      { timezone: "UTC", metadata: { vehicleId: newService.vehicle._id } }
     );
 
-    const userCron = await userCronManager.create({
-      user: req.user._id,
-      vehicle: req.body.vehicleId,
-      cronExpression: cronManager.getCronExpressionFromDate(
-        newService.nextServiceDate
-      ),
-    });
-
-    newService.cronJobId = userCron._id;
-
-    userCronManager.reload();
-
+    newService.cronJobId = jobId;
     await newService.save();
 
     res.status(201).json({
@@ -227,13 +227,46 @@ router.patch("/:id", auth, async (req, res) => {
     //   updatedService.nextServiceDate
     // );
 
-    const cronExpression = "*/1 * * * *";
+    const cronExpression = "* * * * *";
+    // const taskFn = () => {
+    //   appMailer.sendMail({
+    //     to: updatedService.user.email,
+    //     subject: `Service Reminder for ${updatedService.vehicle.make} ${updatedService.vehicle.model}`,
+    //     text: `This is a reminder that your ${updatedService.vehicle.make} ${updatedService.vehicle.model} service is due on ${updatedService.nextServiceDate}`,
+    //   });
+    // };
 
-    const userCron = await userCronManager.update(updatedService.cronJobId, {
-      cronExpression,
+    const taskFn = function (context) {
+      // These are now available through context
+      const { appMailer, VehicleService, serviceId } = context;
+
+      console.log("serviceId:", serviceId);
+
+      return VehicleService.findById(serviceId)
+        .populate("user vehicle")
+        .then((service) => {
+          if (!service || !service.user || !service.vehicle) {
+            console.log("Service, user or vehicle not found");
+          }
+
+          console.log("Sending reminder email to:", service.user.email);
+          return appMailer.sendMail({
+            to: service.user.email,
+            subject: `Service Reminder for ${service.vehicle.make} ${service.vehicle.model}`,
+            text: `This is a reminder that your ${service.vehicle.make} ${service.vehicle.model} service is due on ${service.nextServiceDate}`,
+            html: `<p>This is a reminder...</p>`,
+          });
+        })
+        .catch((err) => {
+          console.error("Reminder failed:", err);
+          throw err;
+        });
+    };
+
+    cronManager.updateJob(updatedService.cronJobId, cronExpression, {
+      task: taskFn.toString(),
     });
 
-    userCronManager.reload();
     res.json({
       status: "success",
       // data: updatedService,
@@ -257,11 +290,7 @@ router.delete("/:id", auth, async (req, res) => {
         .status(404)
         .json({ status: "error", message: "Service not found" });
     }
-
-    await userCronManager.delete(service.cronJobId);
-
-    userCronManager.reload();
-
+    cronManager.deleteJob(service.cronJobId);
     await service.deleteOne();
     res.json({ status: "success", message: "Service deleted" });
   } catch (err) {

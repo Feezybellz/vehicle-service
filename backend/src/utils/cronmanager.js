@@ -54,8 +54,16 @@ class CronManager {
         jobDoc.cronExpression,
         async () => {
           try {
-            await jobDoc.execute();
-          } catch (err) {}
+            // Pass required dependencies to the execution context
+            await jobDoc.execute({
+              appMailer: require("../utils/appMailer"),
+              VehicleService: require("../models/VehicleService"),
+              serviceId: jobDoc.metadata?.serviceId,
+              vehicleId: jobDoc.metadata?.vehicleId,
+            });
+          } catch (err) {
+            console.error(`Error executing cron job ${jobDoc.name}:`, err);
+          }
         },
         {
           scheduled: jobDoc.active,
@@ -71,6 +79,7 @@ class CronManager {
 
       return jobId;
     } catch (err) {
+      console.error(`Failed to create job from DB record ${jobDoc._id}:`, err);
       throw err;
     }
   }
@@ -117,18 +126,13 @@ class CronManager {
   }
 
   async updateJob(jobId, cronExpression, options = {}) {
-    console.log(jobId);
-    console.log(this.jobs);
     try {
       if (!this.jobs.has(jobId)) {
-        await this.createAndSaveJob(jobId, cronExpression, options);
-
         return;
         // throw new Error(`Job ${jobId} not found`);
       }
 
       const job = this.jobs.get(jobId);
-      console.log(job);
 
       job.instance.stop();
 
