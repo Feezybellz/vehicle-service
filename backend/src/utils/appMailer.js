@@ -24,7 +24,6 @@ class AppMailer {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log("Email sent:", info.messageId);
       return {
         success: true,
         messageId: info.messageId,

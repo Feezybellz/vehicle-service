@@ -53,15 +53,9 @@ class UserCronManager {
     userCrons.forEach((userCron) => {
       try {
         const cronJob = nodeCron.schedule(userCron.cronExpression, async () => {
-          console.log("Sending email");
-
           const subject = `Service Reminder for ${userCron.vehicle.make} ${userCron.vehicle.model}`;
 
-          console.log(subject);
-
           const message = `Hello , This is a reminder that your ${userCron.vehicle.make} ${userCron.vehicle.model} is due for a service on ${userCron?.vehicleService?.nextServiceDate ?? "Unknown Date"}.`;
-
-          console.log(message);
 
           const result = await appMailer.sendMail({
             to: userCron.user.email,
@@ -71,9 +65,15 @@ class UserCronManager {
 
           console.log(result);
 
-          //   userCron.status = "sent";
-          //   userCron.active = false;
-          //   await userCron.save();
+          await UserCron.findByIdAndUpdate(
+            userCron._id,
+            {
+              status: "sent",
+              active: false,
+              updatedAt: new Date(),
+            },
+            { new: true }
+          );
 
           console.log("Email sent");
 
