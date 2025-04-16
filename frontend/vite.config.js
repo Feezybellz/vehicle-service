@@ -40,6 +40,10 @@ export default defineConfig({
   },
   server: {
     port: process.env.VITE_PORT || 3000,
-    allowedHosts: ["localhost", "127.0.0.1", process.env.VITE_APP_URL],
+    allowedHosts: [
+      "localhost",
+      "127.0.0.1",
+      ...(process.env.VITE_APP_URL ? [process.env.VITE_APP_URL] : []),
+    ],
   },
 });
