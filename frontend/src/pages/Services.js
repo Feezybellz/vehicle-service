@@ -24,6 +24,15 @@ import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 
 import { vehicleServices, vehicles } from "../services/api";
 
+function toLocalDate(utcDateString) {
+  if (!utcDateString) return "";
+
+  const date = new Date(utcDateString);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16); // Format for datetime-local input:
+}
+
 const Services = () => {
   const [services, setServices] = useState([]);
   const [vehiclesArray, setVehicles] = useState([]);
@@ -80,10 +89,7 @@ const Services = () => {
         vehicle: service.vehicle._id,
         serviceType: service.serviceType,
         serviceDate: new Date(service.serviceDate).toISOString().split("T")[0],
-        nextServiceDate: new Date(service.nextServiceDate)
-          .toISOString()
-          .split("T")[0],
-        mileage: service.mileage,
+        nextServiceDate: service.nextServiceDate,
         cost: service.cost,
         notes: service.notes || "",
         serviceProvider: service.serviceProvider || "",
@@ -111,10 +117,20 @@ const Services = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      if (
+        name === "nextServiceDate" &&
+        updated.nextServiceDate &&
+        new Date(updated.nextServiceDate) < new Date(updated.serviceDate)
+      ) {
+        updated.nextServiceDate = updated.serviceDate;
+      }
+
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -271,12 +287,16 @@ const Services = () => {
                 fullWidth
                 label="Next Service Date"
                 name="nextServiceDate"
-                type="date"
-                value={formData.nextServiceDate}
+                type="datetime-local"
+                value={toLocalDate(formData.nextServiceDate)}
+                InputLabelProps={{ shrink: true }}
+                // Set min attribute to the current serviceDate value to prevent earlier dates
+                inputProps={{
+                  min: formData.serviceDate ? formData.serviceDate : "",
+                }}
                 onChange={handleInputChange}
                 margin="normal"
                 required
-                InputLabelProps={{ shrink: true }}
               />
               <TextField
                 fullWidth

@@ -228,9 +228,12 @@ router.patch("/:id", auth, async (req, res) => {
 
     const userCron = await userCronManager.update(updatedService.cronJobId, {
       cronExpression,
+      active: true,
+      status: "pending",
     });
 
     userCronManager.load();
+
     res.json({
       status: "success",
       // data: updatedService,
