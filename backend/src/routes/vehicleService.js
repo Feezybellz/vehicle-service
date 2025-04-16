@@ -221,7 +221,10 @@ router.patch("/:id", auth, async (req, res) => {
       },
     ]);
 
-    const cronExpression = "*/1 * * * *";
+    // const cronExpression = "*/1 * * * *";
+    const cronExpression = userCronManager.getCronExpressionFromDate(
+      updatedService.nextServiceDate
+    );
 
     const userCron = await userCronManager.update(updatedService.cronJobId, {
       cronExpression,
