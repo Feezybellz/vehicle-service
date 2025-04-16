@@ -68,8 +68,6 @@ class UserCronManager {
             html: message,
           });
 
-          console.log(result);
-
           await UserCron.findByIdAndUpdate(
             userCron._id,
             {

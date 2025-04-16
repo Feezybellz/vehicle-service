@@ -208,7 +208,7 @@ const Services = () => {
                   <TableCell>
                     {new Date(service.nextServiceDate).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>${service.cost}</TableCell>
+                  <TableCell>₦{service.cost}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleOpenDialog(service)}>
                       <EditIcon />
