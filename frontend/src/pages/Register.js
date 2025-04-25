@@ -21,7 +21,10 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState({
+    general: "",
+    fields: {},
+  });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -34,21 +37,38 @@ export default function Register() {
     }));
   };
 
+  const getFieldError = (fieldName) => {
+    return errors.fields[fieldName]?.join(", ") || "";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      return setError("Passwords do not match");
+      return setErrors({
+        general: "Passwords do not match",
+        fields: {},
+      });
     }
 
     try {
-      setError("");
+      setErrors({ general: "", fields: {} });
       setLoading(true);
       const { confirmPassword, ...signupData } = formData;
       await signup(signupData);
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create an account");
+      if (err.response?.data?.errors) {
+        setErrors({
+          general: "",
+          fields: err.response.data.errors,
+        });
+      } else {
+        setErrors({
+          general: err.response?.data?.message || "Failed to create an account",
+          fields: {},
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -77,9 +97,9 @@ export default function Register() {
           <Typography component="h1" variant="h5">
             Sign up
           </Typography>
-          {error && (
+          {errors.general && (
             <Alert severity="error" sx={{ mt: 2, width: "100%" }}>
-              {error}
+              {errors.general}
             </Alert>
           )}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
@@ -94,6 +114,8 @@ export default function Register() {
                   autoComplete="given-name"
                   value={formData.firstName}
                   onChange={handleChange}
+                  error={Boolean(errors.fields.firstName)}
+                  helperText={getFieldError("firstName")}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -106,6 +128,8 @@ export default function Register() {
                   autoComplete="family-name"
                   value={formData.lastName}
                   onChange={handleChange}
+                  error={Boolean(errors.fields.lastName)}
+                  helperText={getFieldError("lastName")}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -118,6 +142,8 @@ export default function Register() {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
+                  error={Boolean(errors.fields.email)}
+                  helperText={getFieldError("email")}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -131,6 +157,8 @@ export default function Register() {
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
+                  error={Boolean(errors.fields.password)}
+                  helperText={getFieldError("password")}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -143,6 +171,8 @@ export default function Register() {
                   id="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  error={Boolean(errors.fields.confirmPassword)}
+                  helperText={getFieldError("confirmPassword")}
                 />
               </Grid>
             </Grid>
